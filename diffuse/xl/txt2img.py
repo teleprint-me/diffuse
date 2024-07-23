@@ -5,13 +5,13 @@
 import argparse
 from datetime import datetime
 from time import sleep
-from typing import Optional
 
 import numpy as np
 import torch
 from diffusers import StableDiffusionXLPipeline
 from PIL import Image
-from transformers import AutoTokenizer
+
+from diffuse.prompt import assert_prompt_length
 
 
 def initialize_pipeline(
@@ -82,29 +82,6 @@ def generate_images(
     elapsed_time = end_time - start_time
 
     return dataset, elapsed_time
-
-
-def assert_prompt_length(
-    tokenizer_path: str,
-    prompt: str,
-    negative_prompt: Optional[str] = None,
-) -> None:
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-    prompt_tokens = len(tokenizer.encode(prompt))
-    negative_prompt_tokens = len(
-        tokenizer.encode(negative_prompt) if negative_prompt else []
-    )
-    model_max_length = tokenizer.model_max_length
-    if prompt_tokens > model_max_length:
-        raise ValueError(
-            f"Prompt is {prompt_tokens} out of {model_max_length} tokens. Shorten your prompts."
-        )
-    print(f"Prompt is okay: Using {prompt_tokens} tokens.\n")
-    if negative_prompt_tokens > tokenizer.model_max_length:
-        raise ValueError(
-            f"Negative prompt is {negative_prompt_tokens} out of {model_max_length} tokens. Shorten your prompts."
-        )
-    print(f"Negative prompt is okay: Using {negative_prompt_tokens} tokens.\n")
 
 
 def main():

@@ -2,14 +2,15 @@ import argparse
 import os
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 import torch
 from diffusers import StableDiffusionXLImg2ImgPipeline
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 from PIL import Image
-from transformers import AutoTokenizer
+
+from diffuse.prompt import assert_prompt_length
 
 
 def evaluate_path(path: str) -> str:
@@ -264,29 +265,6 @@ def generate_images(
         # Gracefully interrupt image generation
         print("KeyboardInterrupt: Exiting now.")
         exit(1)
-
-
-def assert_prompt_length(
-    tokenizer_path: str,
-    prompt: str,
-    negative_prompt: Optional[str] = None,
-) -> None:
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-    prompt_tokens = len(tokenizer.encode(prompt))
-    negative_prompt_tokens = len(
-        tokenizer.encode(negative_prompt) if negative_prompt else []
-    )
-    model_max_length = tokenizer.model_max_length
-    if prompt_tokens > model_max_length:
-        raise ValueError(
-            f"Prompt is {prompt_tokens} out of {model_max_length} tokens. Shorten your prompts."
-        )
-    print(f"Prompt is okay: Using {prompt_tokens} tokens.\n")
-    if negative_prompt_tokens > tokenizer.model_max_length:
-        raise ValueError(
-            f"Negative prompt is {negative_prompt_tokens} out of {model_max_length} tokens. Shorten your prompts."
-        )
-    print(f"Negative prompt is okay: Using {negative_prompt_tokens} tokens.\n")
 
 
 def initialize_arg_parser() -> argparse.ArgumentParser:
