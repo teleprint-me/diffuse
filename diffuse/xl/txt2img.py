@@ -11,28 +11,8 @@ import torch
 from diffusers import StableDiffusionXLPipeline
 from PIL import Image
 
+from diffuse.pipeline import initialize_pipeline
 from diffuse.prompt import assert_prompt_length
-
-
-def initialize_pipeline(
-    model_file_path: str, config: dict
-) -> StableDiffusionXLPipeline:
-    # Create and configure the diffusion pipeline
-    if config.get("use_single_file", False):
-        pipe = StableDiffusionXLPipeline.from_single_file(
-            model_file_path,
-            **config,
-        )
-    else:
-        # kwargs not expected by StableDiffusionXLPipeline and are ignored
-        for key in ["use_single_file"]:
-            config.pop(key)
-        pipe = StableDiffusionXLPipeline.from_pretrained(
-            model_file_path,
-            **config,
-        )
-    pipe.to(config.get("device", "cpu"))
-    return pipe
 
 
 def generate_images(
@@ -146,7 +126,7 @@ def main():
         "add_watermarker": False,
     }
 
-    pipe = initialize_pipeline(args.model, config)
+    pipe = initialize_pipeline(args.model, StableDiffusionXLPipeline, config)
 
     if args.lora_path is not None:
         pipe.load_lora_weights(args.lora_path, adapter_name=args.adapter_name)

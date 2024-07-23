@@ -10,30 +10,12 @@ from diffusers import StableDiffusionXLImg2ImgPipeline
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 from PIL import Image
 
+from diffuse.pipeline import initialize_pipeline
 from diffuse.prompt import assert_prompt_length
 
 
 def evaluate_path(path: str) -> str:
     return os.path.expanduser(os.path.expandvars(path))
-
-
-def initialize_pipeline(
-    model_file_path: str, config: dict
-) -> StableDiffusionXLImg2ImgPipeline:
-    if config.get("use_single_file", False):
-        pipe = StableDiffusionXLImg2ImgPipeline.from_single_file(
-            model_file_path,
-            **config,
-        )
-    else:
-        for key in ["use_single_file"]:
-            config.pop(key, None)
-        pipe = StableDiffusionXLImg2ImgPipeline.from_pretrained(
-            model_file_path,
-            **config,
-        )
-    pipe.to(device=config.get("device", "cpu"))
-    return pipe
 
 
 def initialize_lora(
@@ -343,7 +325,7 @@ def main():
         "add_watermarker": False,
     }
 
-    pipe = initialize_pipeline(args.model, config)
+    pipe = initialize_pipeline(args.model, StableDiffusionXLImg2ImgPipeline, config)
 
     if args.lora is True:
         initialize_lora(pipe, args.lora_path, args.adapter_name)
