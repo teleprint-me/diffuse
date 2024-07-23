@@ -52,10 +52,7 @@ def initialize_pipeline(
         pipeline_config["device"] = "cpu"
 
     if pipeline_config.get("use_single_file", False):
-        pipe = pipeline_class.from_single_file(
-            model_file_path,
-            **pipeline_config,
-        )
+        pipe = pipeline_class.from_single_file(model_file_path, **pipeline_config)
     else:  # kwargs not expected by the pipeline and are ignored
         for key in filter_pipeline_kwargs:
             pipeline_config.pop(key)
