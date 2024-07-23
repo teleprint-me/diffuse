@@ -4,7 +4,7 @@ Module: diffuse.prompt
 
 from typing import Optional
 
-from tokenizers import AutoTokenizer
+from transformers import AutoTokenizer
 
 
 class PromptLengthError(ValueError):
