@@ -51,7 +51,7 @@ def assert_prompt_length(
 
     prompt_tokens = len(tokenizer.encode(prompt))
     negative_prompt_tokens = (
-        len(tokenizer.encode(negative_prompt)) if negative_prompt else []
+        len(tokenizer.encode(negative_prompt)) if negative_prompt else 0
     )
 
     model_max_length = tokenizer.model_max_length
