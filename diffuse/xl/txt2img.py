@@ -25,7 +25,7 @@ def initialize_pipeline(
         )
     else:
         # kwargs not expected by StableDiffusionXLPipeline and are ignored
-        for key in ["use_single_file", "load_safety_checker"]:
+        for key in ["use_single_file"]:
             config.pop(key)
         pipe = StableDiffusionXLPipeline.from_pretrained(
             model_file_path,
@@ -166,7 +166,6 @@ def main():
         "variant": "fp16",
         "torch_dtype": torch.bfloat16,
         "use_safetensors": True,
-        "load_safety_checker": False,
         "add_watermarker": False,
     }
 
