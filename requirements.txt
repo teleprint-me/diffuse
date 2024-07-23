@@ -1,0 +1,27 @@
+# development
+bpython
+black
+flake8
+isort
+
+# dependencies
+
+# base
+requests
+numpy
+tqdm
+Jinja2
+omegaconf
+
+# core
+safetensors
+tokenizers
+transformers
+
+# required
+diffusers
+peft
+accelerate
+
+# extra
+huggingface-hub
