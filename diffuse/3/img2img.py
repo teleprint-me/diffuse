@@ -63,11 +63,6 @@ def get_arguments() -> argparse.Namespace:
         default=None,
         help="Path to the models tokenizer. Defaults to None.",
     )
-    parser.add_argument(
-        "--add_watermarker",
-        action="store_false",
-        help="Watermark generated images. Defaults to True.",
-    )
     return parser.parse_args()
 
 
@@ -77,11 +72,14 @@ def main():
     if args.tokenizer is not None:
         assert_prompt_length(args.tokenizer, args.prompt, args.negative_prompt)
 
-    config = config_pipeline(device=args.device, add_watermarker=args.add_watermarker)
+    # variable keyword arguments to pass to the pipeline for instantiation
+    config = config_pipeline()
+
     pipe_image = initialize_pipeline(
-        args.model,
-        StableDiffusion3Img2ImgPipeline,
-        config,
+        model_file_path=args.model,
+        pipeline_class=StableDiffusion3Img2ImgPipeline,
+        pipeline_config=config,
+        device_type=args.device,
     )
 
     images, elapsed_time = generate_image_to_image(
