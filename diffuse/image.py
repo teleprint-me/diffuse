@@ -42,7 +42,10 @@ def initialize_image(
     return init_image
 
 
-def get_estimated_steps(strength: float, num_inference_steps: int) -> int:
+def get_estimated_steps(
+    strength: float,
+    num_inference_steps: int,
+) -> int:
     """
     Estimate the number of inference steps based on the strength parameter.
 
@@ -72,7 +75,9 @@ def get_estimated_steps(strength: float, num_inference_steps: int) -> int:
 
 
 def adjust_inference_steps(
-    strength: float, num_inference_steps: int, allow_low_strength=False
+    strength: float,
+    num_inference_steps: int,
+    allow_low_strength: bool = False,
 ) -> int:
     """
     Adjust the number of inference steps for the StableDiffusionXLImg2ImgPipeline based on the strength parameter.
@@ -170,9 +175,9 @@ def generate_image_to_image(
     image_path: str,
     prompt: str,
     negative_prompt: Optional[str] = None,
-    strength=0.75,
+    strength: float = 0.75,
     num_inference_steps: int = 50,
-    guidance_scale=7.5,
+    guidance_scale: float = 7.5,
     num_images_per_prompt: int = 2,
     output_directory: str = "images",
     delay: float = 1 / 30,
