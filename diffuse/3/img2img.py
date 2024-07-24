@@ -84,9 +84,6 @@ def main():
         config,
     )
 
-    if args.lora is True:
-        pipe_image.load_lora_weights(args.lora_path, args.adapter_name)
-
     images, elapsed_time = generate_image_to_image(
         pipe_image=pipe_image,
         image_path=args.image,
