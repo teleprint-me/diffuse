@@ -1,7 +1,13 @@
-# https://huggingface.co/stabilityai/sdxl-turbo
-# https://huggingface.co/docs/transformers/model_doc/clip#transformers.CLIPTokenizer
-# https://huggingface.co/docs/diffusers/main/en/api/loaders/lora
-# https://huggingface.co/guoyww/animatediff/tree/main
+"""
+Script: diffuse.xl.txt2img
+
+Documentation:
+- https://huggingface.co/stabilityai/sdxl-turbo
+- https://huggingface.co/docs/transformers/model_doc/clip#transformers.CLIPTokenizer
+- https://huggingface.co/docs/diffusers/main/en/api/loaders/lora
+- https://huggingface.co/guoyww/animatediff/tree/main
+"""
+
 import argparse
 
 import torch
