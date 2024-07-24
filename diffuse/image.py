@@ -40,26 +40,65 @@ def aspect_ratio(width: int, height: int) -> tuple[int, int]:
     return width / divisor, height / divisor
 
 
-# need to calculate the dimensions and resize the canvas to fit the required dimensions
-# the model will only succeed with aspect ratios of 3:2 or 4:3.
-# 4:3 seems suitable as it's more common.
-def calculate_dimensions(width: int, height: int) -> tuple[int, int]:
-    pass
+def calculate_dimensions(
+    width: int,
+    height: int,
+    aspect_ratios: Optional[list[tuple[int, int]]] = None,
+) -> tuple[int, int]:
+    # Desired aspect ratios
+    if aspect_ratios is None:
+        aspect_ratios = [(4, 3), (3, 2)]
+
+    # Calculate current aspect ratio
+    current_ar = width / height
+
+    # Find closest aspect ratio
+    closest_ar = min(aspect_ratios, key=lambda ar: abs(current_ar - ar[0] / ar[1]))
+
+    # Calculate new dimensions based on the closest aspect ratio
+    new_width = closest_ar[0] * height
+    new_height = closest_ar[1] * width
+
+    if new_width > width:
+        new_width = width
+        new_height = int(width * closest_ar[1] / closest_ar[0])
+    else:
+        new_height = height
+        new_width = int(height * closest_ar[0] / closest_ar[1])
+
+    return new_width, new_height
 
 
 def initialize_image(
     image_path: str,
-    dimensions=(768, 512),
-    aspect_ratio=3 / 2,
+    dimensions=None,
+    aspect_ratio=(3, 2),
 ) -> Image:
-    image = Image.open(evaluate_path(image_path)).convert("RGB")
+    image = Image.open(image_path).convert("RGB")
 
     if dimensions is None:
-        resized_image = image.resize((768, 512))
-    else:
-        resized_image = image.resize(dimensions)
+        # documentation is inaccurate and states that the size is given as a 2-tuple (width, height).
+        # what image.size actually returns is (height, width), not (width, height)
+        # this is unfortunate as its causing more confusion than necessary.
+        # i had considered flipping the parameters in related functions here
+        # but convention is typically width, height.
+        height, width = image.size
+        new_width, new_height = calculate_dimensions(width, height)
+        resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
 
-    return resized_image
+        # Create new image with padding to fit the aspect ratio exactly
+        new_image = Image.new(
+            "RGB", (max(new_width, new_height), max(new_width, new_height)), (0, 0, 0)
+        )
+        new_image.paste(
+            resized_image,
+            ((new_image.width - new_width) // 2, (new_image.height - new_height) // 2),
+        )
+    else:
+        resized_image = image.resize(dimensions, Image.ANTIALIAS)
+        new_image = resized_image
+
+    return new_image
 
 
 def get_estimated_steps(
