@@ -22,6 +22,8 @@ transformers
 diffusers
 peft
 accelerate
+sentencepiece
+protobuf
 
 # extra
 huggingface-hub
