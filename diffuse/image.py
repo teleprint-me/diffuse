@@ -44,16 +44,16 @@ def float_is_close(
 
 def calculate_gcd(a: int, b: int) -> int:
     """
-    Calculate the greatest common divisor for the remainder of a ratio between two integers
+    Calculate the greatest common divisor for the remainder of a ratio between two integers.
     """
-    if b == 0:  # hit bedrock and is no longer divisible.
-        return a  # discovered the greatest common divisor
-    return calculate_gcd(b, a % b)  # keep factoring
+    if b == 0:  # Base case for recursion
+        return a  # Discovered the greatest common divisor
+    return calculate_gcd(b, a % b)  # Recursive step
 
 
-def calculate_aspect_ratio(image: Image) -> tuple[int, int]:
+def calculate_aspect_ratio(image: Image) -> Tuple[int, int]:
     """
-    Calculate the image aspect ratio based on the dimensions for Image.size
+    Calculate the image aspect ratio based on the dimensions from Image.size.
     """
     width, height = image.size
     gcd = calculate_gcd(width, height)
@@ -61,28 +61,27 @@ def calculate_aspect_ratio(image: Image) -> tuple[int, int]:
 
 
 def calculate_dimensions(
-    image: Image,
-    aspect_ratios: Optional[list[tuple[int, int]]] = None,
-) -> tuple[int, int]:
+    image: Image, aspect_ratios: Optional[List[Tuple[int, int]]] = None
+) -> Tuple[int, int]:
     """
     Calculate new dimensions based on the closest target aspect ratio.
     """
-    # Get the image dimensions
     width, height = image.size
-    # Desired aspect ratios
+
     if aspect_ratios is None:
         aspect_ratios = [(4, 3), (3, 2)]
-    # Calculate current aspect ratio
+
     current_ar = width / height
-    # Find closest aspect ratio
     closest_ar = min(aspect_ratios, key=lambda ar: abs(current_ar - ar[0] / ar[1]))
     target_width, target_height = closest_ar
+
     if width / target_width > height / target_height:
         new_width = width
         new_height = int(width * target_height / target_width)
     else:
         new_height = height
         new_width = int(height * target_width / target_height)
+
     return new_width, new_height
 
 
@@ -108,13 +107,13 @@ def correct_orientation(image: Image) -> Image:
 
 def initialize_image(
     image_path: str,
-    dimensions: Optional[tuple[int, int]] = None,
-    aspect_ratios: Optional[list[tuple[int, int]]] = None,
+    dimensions: Optional[Tuple[int, int]] = None,
+    aspect_ratios: Optional[List[Tuple[int, int]]] = None,
 ) -> Image:
     image = Image.open(image_path).convert("RGB")
 
     # Correct image orientation based on EXIF data
-    image = correct_orientation(image)  # Assuming portrait mode, flip to landscape
+    image = correct_orientation(image)
 
     if dimensions is None:
         new_width, new_height = calculate_dimensions(image, aspect_ratios)
@@ -125,8 +124,7 @@ def initialize_image(
         new_image = Image.new("RGB", (max_dim, max_dim), (0, 0, 0))
         box_width = (max_dim - new_width) // 2
         box_height = (max_dim - new_height) // 2
-        box_dim = (box_width, box_height)
-        new_image.paste(resized_image, box_dim)
+        new_image.paste(resized_image, (box_width, box_height))
     else:
         new_width, new_height = dimensions
         resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
