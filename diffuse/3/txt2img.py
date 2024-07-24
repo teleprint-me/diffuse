@@ -96,7 +96,6 @@ def main():
         "variant": "fp16",
         "torch_dtype": torch.bfloat16,
         "use_safetensors": True,
-        "add_watermarker": False,
     }
 
     pipe = initialize_pipeline(args.model, StableDiffusion3Pipeline, config)
