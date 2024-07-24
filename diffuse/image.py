@@ -1,5 +1,15 @@
 """
 Module: diffuse.image
+
+References:
+- PIL Image API
+    - https://pillow.readthedocs.io/en/stable/reference/Image.html
+- PIL Exif API
+    - https://pillow.readthedocs.io/en/stable/reference/ExifTags.html
+- Calculating aspect ratios
+    - https://stackoverflow.com/questions/1186414/whats-the-algorithm-to-calculate-aspect-ratio
+- Calculating image dimensions and transpose
+    - https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image
 """
 
 import os
@@ -14,6 +24,9 @@ from PIL import ExifTags, Image
 
 
 def evaluate_path(path: str) -> str:
+    """
+    Evaluate and expand the given file path
+    """
     return os.path.expanduser(os.path.expandvars(path))
 
 
@@ -22,62 +35,66 @@ def float_is_close(
     b: float,
     relative: float = 1e-03,
     absolute: float = 0.0,
-):
+) -> bool:
     """
     Check if two floating-point values are approximately equal within specified tolerances.
     """
     return abs(a - b) <= max(relative * max(abs(a), abs(b)), absolute)
 
 
-# sauce: https://stackoverflow.com/questions/1186414/whats-the-algorithm-to-calculate-aspect-ratio
-def gcd(a: int, b: int) -> int:
+def calculate_gcd(a: int, b: int) -> int:
+    """
+    Calculate the greatest common divisor for the remainder of a ratio between two integers
+    """
     if b == 0:  # hit bedrock and is no longer divisible.
         return a  # discovered the greatest common divisor
-    return gcd(b, a % b)  # keep factoring
+    return calculate_gcd(b, a % b)  # keep factoring
 
 
-def aspect_ratio(width: int, height: int) -> tuple[int, int]:
-    divisor = gcd(width, height)
-    return width // divisor, height // divisor
+def calculate_aspect_ratio(image: Image) -> tuple[int, int]:
+    """
+    Calculate the image aspect ratio based on the dimensions for Image.size
+    """
+    width, height = image.size
+    gcd = calculate_gcd(width, height)
+    return width // gcd, height // gcd
 
 
 def calculate_dimensions(
-    width: int,
-    height: int,
+    image: Image,
     aspect_ratios: Optional[list[tuple[int, int]]] = None,
 ) -> tuple[int, int]:
+    """
+    Calculate new dimensions based on the closest target aspect ratio.
+    """
+    # Get the image dimensions
+    width, height = image.size
     # Desired aspect ratios
     if aspect_ratios is None:
         aspect_ratios = [(4, 3), (3, 2)]
-
     # Calculate current aspect ratio
     current_ar = width / height
-
     # Find closest aspect ratio
     closest_ar = min(aspect_ratios, key=lambda ar: abs(current_ar - ar[0] / ar[1]))
-
-    # Calculate new dimensions based on the closest aspect ratio
-    new_width = closest_ar[0] * height
-    new_height = closest_ar[1] * width
-
-    if new_width > width:
+    target_width, target_height = closest_ar
+    if width / target_width > height / target_height:
         new_width = width
-        new_height = int(width * closest_ar[1] / closest_ar[0])
+        new_height = int(width * target_height / target_width)
     else:
         new_height = height
-        new_width = int(height * closest_ar[0] / closest_ar[1])
-
+        new_width = int(height * target_width / target_height)
     return new_width, new_height
 
 
-# sauce: https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image
 def correct_orientation(image: Image) -> Image:
+    """
+    Correct the image orientation based on EXIF data.
+    """
     try:
         for orientation in ExifTags.TAGS.keys():
             if ExifTags.TAGS[orientation] == "Orientation":
                 break
         exif = dict(image._getexif().items())
-
         if exif[orientation] == 3:
             image = image.rotate(180, expand=True)
         elif exif[orientation] == 6:
@@ -85,38 +102,34 @@ def correct_orientation(image: Image) -> Image:
         elif exif[orientation] == 8:
             image = image.rotate(90, expand=True)
     except (AttributeError, KeyError, IndexError):
-        # guess if image does not have getexif
-        pass
+        pass  # No EXIF data, or unexpected format
     return image
 
 
 def initialize_image(
     image_path: str,
-    dimensions=None,
-    aspect_ratio=(3, 2),
+    dimensions: Optional[tuple[int, int]] = None,
+    aspect_ratios: Optional[list[tuple[int, int]]] = None,
 ) -> Image:
     image = Image.open(image_path).convert("RGB")
 
     # Correct image orientation based on EXIF data
-    image = correct_orientation(image)
-
-    # Handle portrait and landscape mode by ensuring width and height are assigned correctly
-    height, width = image.size
+    image = correct_orientation(image)  # Assuming portrait mode, flip to landscape
 
     if dimensions is None:
-        new_width, new_height = calculate_dimensions(width, height)
+        new_width, new_height = calculate_dimensions(image, aspect_ratios)
         resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
 
         # Create new image with padding to fit the aspect ratio exactly
-        new_image = Image.new(
-            "RGB", (max(new_width, new_height), max(new_width, new_height)), (0, 0, 0)
-        )
-        new_image.paste(
-            resized_image,
-            ((new_image.width - new_width) // 2, (new_image.height - new_height) // 2),
-        )
+        max_dim = max(new_width, new_height)
+        new_image = Image.new("RGB", (max_dim, max_dim), (0, 0, 0))
+        box_width = (max_dim - new_width) // 2
+        box_height = (max_dim - new_height) // 2
+        box_dim = (box_width, box_height)
+        new_image.paste(resized_image, box_dim)
     else:
-        resized_image = image.resize(dimensions, Image.ANTIALIAS)
+        new_width, new_height = dimensions
+        resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
         new_image = resized_image
 
     return new_image
