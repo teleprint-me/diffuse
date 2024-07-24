@@ -62,7 +62,7 @@ def assert_prompt_length(
             "Shorten your prompts."
         )
 
-    print(f"Prompt is okay: Using {prompt_tokens} tokens.\n")
+    print(f"Prompt is okay: Using {prompt_tokens} tokens.")
 
     if negative_prompt_tokens > model_max_length:
         raise PromptLengthError(
