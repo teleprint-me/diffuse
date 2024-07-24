@@ -14,7 +14,7 @@ from diffuse.text import generate_text_to_image
 
 def get_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate images using stable-diffusion-xl models."
+        description="Generate images using text with stable-diffusion-xl models."
     )
     parser.add_argument("model", help="Path to the diffusion model file")
     parser.add_argument("prompt", help="Prompt for image generation")
