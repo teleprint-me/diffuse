@@ -10,7 +10,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 from diffusers.pipelines import DiffusionPipeline
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
-from PIL import Image
+from PIL import ExifTags, Image
 
 
 def evaluate_path(path: str) -> str:
@@ -37,7 +37,7 @@ def gcd(a: int, b: int) -> int:
 
 def aspect_ratio(width: int, height: int) -> tuple[int, int]:
     divisor = gcd(width, height)
-    return width / divisor, height / divisor
+    return width // divisor, height // divisor
 
 
 def calculate_dimensions(
@@ -69,12 +69,34 @@ def calculate_dimensions(
     return new_width, new_height
 
 
+def correct_orientation(image: Image) -> Image:
+    try:
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == "Orientation":
+                break
+        exif = dict(image._getexif().items())
+
+        if exif[orientation] == 3:
+            image = image.rotate(180, expand=True)
+        elif exif[orientation] == 6:
+            image = image.rotate(270, expand=True)
+        elif exif[orientation] == 8:
+            image = image.rotate(90, expand=True)
+    except (AttributeError, KeyError, IndexError):
+        # guess if image does not have getexif
+        pass
+    return image
+
+
 def initialize_image(
     image_path: str,
     dimensions=None,
     aspect_ratio=(3, 2),
 ) -> Image:
     image = Image.open(image_path).convert("RGB")
+
+    # Correct image orientation based on EXIF data
+    image = correct_orientation(image)
 
     # Handle portrait and landscape mode by ensuring width and height are assigned correctly
     height, width = image.size
