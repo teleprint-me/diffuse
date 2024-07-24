@@ -9,6 +9,7 @@ a single pre-trained file.
 
 from typing import Any, Dict, List, Optional, Type
 
+from diffusers.loaders import FromSingleFileMixin
 from diffusers.pipelines import DiffusionPipeline
 
 
@@ -51,8 +52,10 @@ def initialize_pipeline(
     if pipeline_config.get("device") is None:
         pipeline_config["device"] = "cpu"
 
-    if pipeline_config.get("use_single_file", False):
-        pipe = pipeline_class.from_single_file(model_file_path, **pipeline_config)
+    # from_single_file method is only available to classes inheriting from FromSingleFileMixin
+    if isinstance(FromSingleFileMixin, pipeline_class):
+        if pipeline_config.get("use_single_file", False):
+            pipe = pipeline_class.from_single_file(model_file_path, **pipeline_config)
     else:  # kwargs not expected by the pipeline and are ignored
         for key in filter_pipeline_kwargs:
             pipeline_config.pop(key)
