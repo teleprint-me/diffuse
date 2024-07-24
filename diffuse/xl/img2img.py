@@ -65,7 +65,7 @@ def get_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--lora_path",
-        help="Path to LoRA weights. Required if --lora is set. Flag is implied as True.",
+        help="Path to LoRA weights. --lora is required to execute.",
     )
     parser.add_argument(
         "--adapter_name",
@@ -106,7 +106,7 @@ def main():
     pipe = initialize_pipeline(args.model, StableDiffusionXLImg2ImgPipeline, config)
 
     if args.lora is True:
-        pipe.load_lora_weights(args.model, args.adapter_name)
+        pipe.load_lora_weights(args.lora_path, args.adapter_name)
 
     images, elapsed_time = generate_image_to_image(
         pipe,
