@@ -29,6 +29,7 @@ def float_is_close(
     return abs(a - b) <= max(relative * max(abs(a), abs(b)), absolute)
 
 
+# sauce: https://stackoverflow.com/questions/1186414/whats-the-algorithm-to-calculate-aspect-ratio
 def gcd(a: int, b: int) -> int:
     if b == 0:  # hit bedrock and is no longer divisible.
         return a  # discovered the greatest common divisor
@@ -69,6 +70,7 @@ def calculate_dimensions(
     return new_width, new_height
 
 
+# sauce: https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image
 def correct_orientation(image: Image) -> Image:
     try:
         for orientation in ExifTags.TAGS.keys():
