@@ -107,32 +107,30 @@ def correct_orientation(image: Image) -> Image:
     return image
 
 
+def resize_and_pad(image: Image, new_width: int, new_height: int) -> Image:
+    resized_image = image.resize((new_width, new_height), Image.LANCZOS)
+    max_dim = max(new_width, new_height)
+    new_image = Image.new("RGB", (max_dim, max_dim), (0, 0, 0))
+    box_width = (max_dim - new_width) // 2
+    box_height = (max_dim - new_height) // 2
+    new_image.paste(resized_image, (box_width, box_height))
+    return new_image
+
+
 def initialize_image(
     image_path: str,
     dimensions: Optional[Tuple[int, int]] = None,
     aspect_ratios: Optional[List[Tuple[int, int]]] = None,
 ) -> Image:
     image = Image.open(image_path).convert("RGB")
-
-    # Correct image orientation based on EXIF data
     image = correct_orientation(image)
 
     if dimensions is None:
         new_width, new_height = calculate_dimensions(image, aspect_ratios)
-        resized_image = image.resize((new_width, new_height), Image.LANCZOS)
-
-        # Create new image with padding to fit the aspect ratio exactly
-        max_dim = max(new_width, new_height)
-        new_image = Image.new("RGB", (max_dim, max_dim), (0, 0, 0))
-        box_width = (max_dim - new_width) // 2
-        box_height = (max_dim - new_height) // 2
-        new_image.paste(resized_image, (box_width, box_height))
     else:
         new_width, new_height = dimensions
-        resized_image = image.resize((new_width, new_height), Image.LANCZOS)
-        new_image = resized_image
 
-    return new_image
+    return resize_and_pad(image, new_width, new_height)
 
 
 def get_estimated_steps(
