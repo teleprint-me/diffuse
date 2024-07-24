@@ -76,13 +76,10 @@ def initialize_image(
 ) -> Image:
     image = Image.open(image_path).convert("RGB")
 
+    # Handle portrait and landscape mode by ensuring width and height are assigned correctly
+    height, width = image.size
+
     if dimensions is None:
-        # documentation is inaccurate and states that the size is given as a 2-tuple (width, height).
-        # what image.size actually returns is (height, width), not (width, height)
-        # this is unfortunate as its causing more confusion than necessary.
-        # i had considered flipping the parameters in related functions here
-        # but convention is typically width, height.
-        height, width = image.size
         new_width, new_height = calculate_dimensions(width, height)
         resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
 
