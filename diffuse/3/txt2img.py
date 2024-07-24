@@ -10,9 +10,9 @@ The generated image is then saved as an PNG file for easy viewing.
 
 import argparse
 
-import torch
 from diffusers import StableDiffusion3Pipeline
 
+from diffuse.config import config_pipeline
 from diffuse.pipeline import initialize_pipeline
 from diffuse.prompt import assert_prompt_length
 from diffuse.text import generate_text_to_image
@@ -90,21 +90,14 @@ def main():
     if args.tokenizer is not None:
         assert_prompt_length(args.tokenizer, args.prompt, args.negative_prompt)
 
-    config = {
-        "use_single_file": args.use_single_file,
-        "device": args.device,
-        "variant": "fp16",
-        "torch_dtype": torch.bfloat16,
-        "use_safetensors": True,
-    }
-
-    pipe = initialize_pipeline(args.model, StableDiffusion3Pipeline, config)
+    config = config_pipeline(device=args.device, use_single_file=args.use_single_file)
+    pipe_text = initialize_pipeline(args.model, StableDiffusion3Pipeline, config)
 
     if args.lora is True:
-        pipe.load_lora_weights(args.lora_path, args.adapter_name)
+        pipe_text.load_lora_weights(args.lora_path, args.adapter_name)
 
     images, elapsed_time = generate_text_to_image(
-        pipe_text=pipe,
+        pipe_text=pipe_text,
         prompt=args.prompt,
         negative_prompt=args.negative_prompt,
         num_inference_steps=args.num_steps,
