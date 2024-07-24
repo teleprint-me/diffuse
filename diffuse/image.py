@@ -10,6 +10,8 @@ References:
     - https://stackoverflow.com/questions/1186414/whats-the-algorithm-to-calculate-aspect-ratio
 - Calculating image dimensions and transpose
     - https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image
+- ANTIALIAS renamed to LANCZOS
+    - https://pillow.readthedocs.io/en/stable/releasenotes/2.7.0.html#antialias-renamed-to-lanczos
 """
 
 import os
@@ -117,7 +119,7 @@ def initialize_image(
 
     if dimensions is None:
         new_width, new_height = calculate_dimensions(image, aspect_ratios)
-        resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
+        resized_image = image.resize((new_width, new_height), Image.LANCZOS)
 
         # Create new image with padding to fit the aspect ratio exactly
         max_dim = max(new_width, new_height)
@@ -127,7 +129,7 @@ def initialize_image(
         new_image.paste(resized_image, (box_width, box_height))
     else:
         new_width, new_height = dimensions
-        resized_image = image.resize((new_width, new_height), Image.ANTIALIAS)
+        resized_image = image.resize((new_width, new_height), Image.LANCZOS)
         new_image = resized_image
 
     return new_image
