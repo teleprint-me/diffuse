@@ -37,42 +37,53 @@ def get_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--strength",
         type=float,
-        default=0.75,
-        help="The amount of noise added to the image. Values must be between 0 and 1.",
+        default=0.5,
+        help="The amount of noise added to the image. Values must be between 0 and 1. Default is (float) 0.5.",
     )
     parser.add_argument(
         "--guidance_scale",
         type=float,
-        default=7.5,
-        help="Guidance scale for image generation",
+        default=7,
+        help="Guidance scale for image generation. Default is (float) 7.0.",
     )
     parser.add_argument(
-        "--num_images", type=int, default=2, help="Number of images to generate"
+        "--num_images",
+        type=int,
+        default=2,
+        help="Number of images to generate. Default is (int) 2.",
     )
     parser.add_argument(
-        "--num_steps", type=int, default=50, help="Number of inference steps"
+        "--num_steps",
+        type=int,
+        default=50,
+        help="Number of inference steps. Default is (int) 50.",
     )
     parser.add_argument(
         "--lora",
         action="store_true",
-        help="Use LoRA for fine-tuning the model",
+        help="Use LoRA for fine-tuning the model. Default is False.",
     )
     parser.add_argument(
         "--lora_path",
-        help="Path to LoRA weights",
+        help="Path to LoRA weights. Required if --lora is set. Flag is implied as True.",
     )
     parser.add_argument(
         "--adapter_name",
-        help="Name of the LoRA adapter",
+        help="Name of the LoRA adapter. (Optional) Name for the adapter.",
     )
     parser.add_argument(
-        "--delay", type=float, default=1 / 30, help="Delay between image generation"
+        "--delay",
+        type=float,
+        default=1 / 30,
+        help="Delay between image generation. Default is (float) 0.0333...",
     )
     parser.add_argument(
-        "--device", default="cpu", help="The device to use. Defaults to 'cpu'"
+        "--device", default="cpu", help="The device to use. Defaults to 'cpu'."
     )
     parser.add_argument(
-        "--tokenizer", default=None, help="Path to the models tokenizer"
+        "--tokenizer",
+        default=None,
+        help="Path to the models tokenizer. Defaults to None.",
     )
     return parser.parse_args()
 
