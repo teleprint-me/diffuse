@@ -18,6 +18,7 @@ def initialize_pipeline(
     pipeline_class: Type[DiffusionPipeline],
     pipeline_config: Optional[Dict[str, Any]] = None,
     filter_pipeline_kwargs: Optional[List[str]] = None,
+    device_type: Optional[str] = None,
 ) -> DiffusionPipeline:
     """
     Initialize the diffusion pipeline for a given class (e.g.,
@@ -49,8 +50,8 @@ def initialize_pipeline(
     if filter_pipeline_kwargs is None:
         filter_pipeline_kwargs = ["use_single_file"]
 
-    if pipeline_config.get("device") is None:
-        pipeline_config["device"] = "cpu"
+    if device_type is None:
+        device_type = "cpu"
 
     # from_single_file method is only available to classes inheriting from FromSingleFileMixin
     if isinstance(FromSingleFileMixin, pipeline_class):
@@ -61,6 +62,6 @@ def initialize_pipeline(
             pipeline_config.pop(key)
         pipe = pipeline_class.from_pretrained(model_file_path, **pipeline_config)
 
-    pipe.to(pipeline_config["device"])
+    pipe.to(device_type)
 
     return pipe
