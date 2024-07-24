@@ -18,7 +18,7 @@ def generate_text_to_image(
     guidance_scale: float = 7,
     num_images_per_prompt: int = 2,
     output_directory: str = "images",
-    timer: float = 1 / 30,
+    delay: float = 1 / 30,
 ) -> tuple[list[tuple[Image, str]], float]:
     # Generate images based on the provided prompts
     dataset = []
@@ -47,7 +47,7 @@ def generate_text_to_image(
             image.save(image_path)
             dataset.append((image, image_path))
             print(f"Created: {image_path}")
-            sleep(timer)  # NOTE: Prevent overwrites
+            sleep(delay)  # NOTE: Prevent overwrites
     except KeyboardInterrupt:
         # NOTE: Gracefully interrupt image generation
         print("KeyboardInterrupt: Exiting now.")
