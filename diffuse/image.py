@@ -17,29 +17,49 @@ def evaluate_path(path: str) -> str:
     return os.path.expanduser(os.path.expandvars(path))
 
 
+def float_is_close(
+    a: float,
+    b: float,
+    relative: float = 1e-03,
+    absolute: float = 0.0,
+):
+    """
+    Check if two floating-point values are approximately equal within specified tolerances.
+    """
+    return abs(a - b) <= max(relative * max(abs(a), abs(b)), absolute)
+
+
+def gcd(a: int, b: int) -> int:
+    if b == 0:  # hit bedrock and is no longer divisible.
+        return a  # discovered the greatest common divisor
+    return gcd(b, a % b)  # keep factoring
+
+
+def aspect_ratio(width: int, height: int) -> tuple[int, int]:
+    divisor = gcd(width, height)
+    return width / divisor, height / divisor
+
+
+# need to calculate the dimensions and resize the canvas to fit the required dimensions
+# the model will only succeed with aspect ratios of 3:2 or 4:3.
+# 4:3 seems suitable as it's more common.
+def calculate_dimensions(width: int, height: int) -> tuple[int, int]:
+    pass
+
+
 def initialize_image(
     image_path: str,
-    dimensions: Tuple[int, int] = None,
+    dimensions=(768, 512),
+    aspect_ratio=3 / 2,
 ) -> Image:
-    """
-    Initialize and preprocess the input image.
-
-    Args:
-        image_path (str): Path to the initial image.
-        dimensions (Tuple[int, int], optional): Desired image dimensions (width, height).
-            If None, default dimensions (768x512) are used.
-
-    Returns:
-        Image: Preprocessed image.
-    """
-    init_image = Image.open(evaluate_path(image_path)).convert("RGB")
+    image = Image.open(evaluate_path(image_path)).convert("RGB")
 
     if dimensions is None:
-        init_image = init_image.resize((768, 512))
+        resized_image = image.resize((768, 512))
     else:
-        init_image = init_image.resize(dimensions)
+        resized_image = image.resize(dimensions)
 
-    return init_image
+    return resized_image
 
 
 def get_estimated_steps(
