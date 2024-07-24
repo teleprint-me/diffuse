@@ -3,70 +3,18 @@
 # https://huggingface.co/docs/diffusers/main/en/api/loaders/lora
 # https://huggingface.co/guoyww/animatediff/tree/main
 import argparse
-from datetime import datetime
-from time import sleep
 
-import numpy as np
 import torch
 from diffusers import StableDiffusionXLPipeline
-from PIL import Image
 
 from diffuse.pipeline import initialize_pipeline
 from diffuse.prompt import assert_prompt_length
+from diffuse.text import generate_text_to_image
 
 
-def generate_images(
-    pipe: StableDiffusionXLPipeline,
-    prompt: str,
-    negative_prompt: str,
-    num_inference_steps: int = 50,
-    guidance_scale: float = 7,
-    num_images_per_prompt: int = 2,
-    output_directory: str = "images",
-    timer: float = 1 / 30,
-) -> tuple[list[tuple[Image, str]], float]:
-    # Generate images based on the provided prompts
-    dataset = []
-    start_time = datetime.now()
-
-    try:
-        result = pipe(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
-            num_images_per_prompt=num_images_per_prompt,
-        )
-
-        # Handle different types of results (list or numpy array)
-        if isinstance(result.images, list):
-            images = result.images
-        elif isinstance(result.images, np.ndarray):
-            images = [Image.fromarray(img) for img in result.images]
-        else:
-            raise ValueError("Unsupported image format")
-
-        # Create a unique filename using the current timestamp
-        for image in images:
-            image_path = f"{output_directory}/{datetime.now()}.png"
-            image.save(image_path)
-            dataset.append((image, image_path))
-            print(f"Created: {image_path}")
-            sleep(timer)  # NOTE: Prevent overwrites
-    except KeyboardInterrupt:
-        # NOTE: Gracefully interrupt image generation
-        print("KeyboardInterrupt: Exiting now.")
-        exit(1)
-
-    end_time = datetime.now()
-    elapsed_time = end_time - start_time
-
-    return dataset, elapsed_time
-
-
-def main():
+def get_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate images using diffusion-based models."
+        description="Generate images using stable-diffusion-xl models."
     )
     parser.add_argument("model", help="Path to the diffusion model file")
     parser.add_argument("prompt", help="Prompt for image generation")
@@ -111,8 +59,11 @@ def main():
     parser.add_argument(
         "--device", default="cpu", help="The device to use. Defaults to 'cpu'"
     )
+    return parser.parse_args()
 
-    args = parser.parse_args()
+
+def main():
+    args = get_arguments()
 
     if args.tokenizer is not None:
         assert_prompt_length(args.tokenizer, args.prompt, args.negative_prompt)
@@ -131,7 +82,7 @@ def main():
     if args.lora_path is not None:
         pipe.load_lora_weights(args.lora_path, adapter_name=args.adapter_name)
 
-    images, elapsed_time = generate_images(
+    images, elapsed_time = generate_text_to_image(
         pipe,
         args.prompt,
         args.negative_prompt,
