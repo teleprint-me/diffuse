@@ -2,6 +2,7 @@
 Module: diffuse.text
 """
 
+import os
 from datetime import datetime
 from time import sleep
 
@@ -23,6 +24,8 @@ def generate_text_to_image(
     # Generate images based on the provided prompts
     dataset = []
     start_time = datetime.now()
+
+    os.makedirs(output_directory, exist_ok=True)
 
     try:
         result = pipe_text(
