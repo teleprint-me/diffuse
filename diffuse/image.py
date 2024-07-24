@@ -185,8 +185,10 @@ def generate_image_to_image(
 ) -> Tuple[List[Tuple[Image, str]], float]:
     try:
         start_time = datetime.now()
-        init_image = initialize_image(image_path, dimensions)
 
+        os.makedirs(output_directory, exist_ok=True)
+
+        init_image = initialize_image(image_path, dimensions)
         adjusted_inference_steps = adjust_inference_steps(strength, num_inference_steps)
 
         result = pipe_image(
