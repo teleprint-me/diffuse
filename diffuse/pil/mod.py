@@ -21,18 +21,6 @@ from datetime import datetime
 from PIL import ExifTags, Image, ImageOps
 
 
-def calculate_gcd(a: int, b: int) -> int:
-    if b == 0:
-        return a
-    return calculate_gcd(b, a % b)
-
-
-def calculate_aspect_ratio(image: Image) -> tuple[int, int]:
-    width, height = image.size
-    gcd = calculate_gcd(width, height)
-    return width // gcd, height // gcd
-
-
 def correct_orientation(image: Image) -> Image:
     try:
         for orientation in ExifTags.TAGS.keys():
@@ -66,14 +54,22 @@ def resize_and_pad(image: Image, target_aspect_ratio: float) -> Image:
     return image.resize((width, int(width / target_aspect_ratio)), Image.LANCZOS)
 
 
+def write_image(image: Image, output_path: str) -> None:
+    image_path = "-".join(f"{output_path}/{datetime.now()}.png".split(" "))
+    image.save(image_path)
+    print(f"Saved image to {image_path}")
+
+
 def process_image(input_path: str, output_path: str, display: bool) -> None:
     with Image.open(input_path) as image:
+        # orientate, resize, and pad image
         image = correct_orientation(image)
         image = resize_and_pad(image, target_aspect_ratio=3 / 2)
+        image = image.resize((1200, 800), Image.LANCZOS)  # Resize to fixed size
 
+        # create the path, file, and write to disk
         os.makedirs(output_path, exist_ok=True)
-        image_path = f"{output_path}/{datetime.now()}.png"
-        image.save(image_path)
+        write_image(image, output_path)
 
         if display:
             image.show()
