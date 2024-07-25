@@ -1,15 +1,19 @@
 """
-Script: diffuse.pil.mod
+diffuse.pil.mod
 
-Script to modify an image if needed.
+A script for preprocessing images to meet the requirements of diffusion models, which expect an aspect ratio of 3:2.
 
-Diffusion models expect images with an aspect ratio of 3:2
+The script handles two main cases:
 
-In most cases, landscape images are fine, but may need to be rescaled to fit a ratio of 3:2.
+1. Landscape images with a valid aspect ratio are left unchanged.
+2. Portrait images (with a different aspect ratio) undergo three transformations before being adjusted to the required dimensions:
+   - Rotate back to their original orientation using metadata if available
+   - Pad the width to ensure it is divisible by 3
+   - Scale down until an aspect ratio of 3:2 is achieved
 
-Portrait images cause issues as they are rotated 90 degrees in most cases. The image needs to be rotated back to its expected orientation with the use of metadata. Then the image needs a padded width. Finally, the image needs to be scaled to a aspect ratio of 3:2.
-
-This script attempts to completely automate this process so that any image may be used as input for any compatible stable diffusion model.
-
-In most cases, this script shouldn't be necessary, but it's being implemented to assist with implementing the boilerplate code necessary to achieve the related end goals.
+This script aims to simplify the preprocessing step for stable diffusion models, making it easier to implement and use various images as input. In most cases, this script isn't necessary, but it can help save time when dealing with a large number of images or complex image formats.
 """
+
+import argparse
+
+from PIL import ExifTags, Image, ImageOps
