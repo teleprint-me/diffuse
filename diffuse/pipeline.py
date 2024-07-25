@@ -20,13 +20,23 @@ from PIL import Image
 def pipeline_config(
     **kwargs: Dict[str, Any],
 ) -> Dict[str, Any]:
-    config = {}
-    config["variant"] = kwargs.get("variant", "fp16")
-    config["torch_dtype"] = kwargs.get("torch_dtype", torch.bfloat16)
-    config["use_safetensors"] = kwargs.get("use_safetensors", True)
-    config["add_watermarker"] = kwargs.get("add_watermarker", True)
-    config["use_single_file"] = kwargs.get("use_single_file", False)
-    config["device"] = kwargs.get("device", "cpu")
+    """
+    Create a configuration dictionary for initializing diffusion pipelines.
+
+    Args:
+        **kwargs (Dict[str, Any]): Keyword arguments for configuration options.
+
+    Returns:
+        Dict[str, Any]: Configuration dictionary with default values and overrides.
+    """
+    config = {
+        "variant": kwargs.get("variant", "fp16"),
+        "torch_dtype": kwargs.get("torch_dtype", torch.bfloat16),
+        "use_safetensors": kwargs.get("use_safetensors", True),
+        "add_watermarker": kwargs.get("add_watermarker", True),
+        "use_single_file": kwargs.get("use_single_file", False),
+        "device": kwargs.get("device", "cpu"),
+    }
     config.update(kwargs)
     return config
 
@@ -56,10 +66,10 @@ def pipeline_initialize(
 
     Raises:
         FileNotFoundError: If the specified model_file_path is invalid
+        TypeError: If the pipeline class does not support loading from a single file.
 
     Examples:
-        >>> initialize_pipeline("my_model_directory", StableDiffusion3Pipeline, {"device": "cpu"})
-
+        >>> pipeline_initialize("my_model_directory", StableDiffusion3Pipeline, {"device": "cpu"})
     """
     if pipeline_config is None:
         pipeline_config = {}
@@ -90,7 +100,7 @@ def pipeline_initialize(
     return pipe
 
 
-def pipeline_handle_result(result: StableDiffusionPipelineOutput) -> List[Image]:
+def pipeline_process_result(result: StableDiffusionPipelineOutput) -> List[Image.Image]:
     """
     Handle the result from the diffusion pipeline and convert it into a list of PIL Images.
 
@@ -98,9 +108,11 @@ def pipeline_handle_result(result: StableDiffusionPipelineOutput) -> List[Image]
         result (StableDiffusionPipelineOutput): Result from the diffusion pipeline.
 
     Returns:
-        List[Image]: List of generated images.
-    """
+        List[Image.Image]: List of generated images.
 
+    Raises:
+        ValueError: If the image format in the result is unsupported.
+    """
     if isinstance(result.images, list):
         images = result.images
     elif isinstance(result.images, np.ndarray):
