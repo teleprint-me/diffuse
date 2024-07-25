@@ -15,6 +15,7 @@ import argparse
 import torch
 from diffusers import StableDiffusionXLImg2ImgPipeline
 
+from diffuse.config import config_pipeline
 from diffuse.image import generate_image_to_image
 from diffuse.pipeline import initialize_pipeline
 from diffuse.prompt import assert_prompt_length
@@ -24,8 +25,8 @@ def get_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate images using images with stable-diffusion-xl models."
     )
-    parser.add_argument("model", help="Path to the diffusion model or model ID")
-    parser.add_argument("image", help="Path to the initial image")
+    parser.add_argument("model_path", help="Path to the diffusion model or model ID")
+    parser.add_argument("image_path", help="Path to the input image")
     parser.add_argument("prompt", help="Prompt for image generation")
     parser.add_argument(
         "--use_single_file", action="store_true", help="Use a fine-tuned model"
@@ -80,7 +81,7 @@ def get_arguments() -> argparse.Namespace:
         help="Delay between image generation. Default is (float) 0.0333...",
     )
     parser.add_argument(
-        "--device", default="cpu", help="The device to use. Defaults to 'cpu'."
+        "--device-type", default="cpu", help="The device to use. Defaults to 'cpu'."
     )
     parser.add_argument(
         "--tokenizer",
@@ -96,23 +97,28 @@ def main():
     if args.tokenizer is not None:
         assert_prompt_length(args.tokenizer, args.prompt, args.negative_prompt)
 
-    config = {
-        "use_single_file": args.use_single_file,  # You can customize other model-specific parameters here
-        "device": args.device,  # Change to "cuda" if using GPU
-        "variant": "fp16",
-        "torch_dtype": torch.bfloat16,
-        "use_safetensors": True,
-        "add_watermarker": False,
-    }
+    # variable keyword arguments to pass to the pipeline for instantiation
+    config = config_pipeline(
+        variant="fp16",
+        use_safetensors=True,
+        add_watermarker=False,
+        torch_dtype=torch.bfloat16,
+        use_single_file=args.use_single_file,
+    )
 
-    pipe = initialize_pipeline(args.model, StableDiffusionXLImg2ImgPipeline, config)
+    pipe = initialize_pipeline(
+        model_file_path=args.model_path,
+        pipeline_class=StableDiffusionXLImg2ImgPipeline,
+        pipeline_config=config,
+        device_type=args.device_type,  # 'cpu', 'cude', etc.
+    )
 
     if args.lora is True:
         pipe.load_lora_weights(args.lora_path, args.adapter_name)
 
     images, elapsed_time = generate_image_to_image(
         pipe,
-        args.image,
+        args.image_path,
         args.prompt,
         negative_prompt=args.negative_prompt,
         strength=args.strength,
