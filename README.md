@@ -23,7 +23,7 @@ virtualenv .venv
 source .venv/bin/activate
 ```
 
-2. Enable execution bits for setup scripts:
+2. Enable execution bit for setup scripts:
 
 ```sh
 chmod +x setup.sh
