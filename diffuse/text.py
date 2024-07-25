@@ -7,31 +7,8 @@ from datetime import datetime
 from time import sleep
 from typing import List, Optional, Tuple
 
-import numpy as np
 from diffusers.pipelines import DiffusionPipeline
-from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 from PIL import Image
-
-
-def handle_pipeline_result(result: StableDiffusionPipelineOutput) -> List[Image]:
-    """
-    Handle the result from the diffusion pipeline and convert it into a list of PIL Images.
-
-    Args:
-        result (StableDiffusionPipelineOutput): Result from the diffusion pipeline.
-
-    Returns:
-        List[Image]: List of generated images.
-    """
-
-    if isinstance(result.images, list):
-        images = result.images
-    elif isinstance(result.images, np.ndarray):
-        images = [Image.fromarray(img) for img in result.images]
-    else:
-        raise ValueError("Unsupported image format")
-
-    return images
 
 
 def write_images(

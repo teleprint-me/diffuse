@@ -9,11 +9,29 @@ a single pre-trained file.
 
 from typing import Any, Dict, List, Optional, Type
 
+import numpy as np
+import torch
 from diffusers.loaders import FromSingleFileMixin
 from diffusers.pipelines import DiffusionPipeline
+from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
+from PIL import Image
 
 
-def initialize_pipeline(
+def pipeline_config(
+    **kwargs: Dict[str, Any],
+) -> Dict[str, Any]:
+    config = {}
+    config["variant"] = kwargs.get("variant", "fp16")
+    config["torch_dtype"] = kwargs.get("torch_dtype", torch.bfloat16)
+    config["use_safetensors"] = kwargs.get("use_safetensors", True)
+    config["add_watermarker"] = kwargs.get("add_watermarker", True)
+    config["use_single_file"] = kwargs.get("use_single_file", False)
+    config["device"] = kwargs.get("device", "cpu")
+    config.update(kwargs)
+    return config
+
+
+def pipeline_initialize(
     model_file_path: str,
     pipeline_class: Type[DiffusionPipeline],
     pipeline_config: Optional[Dict[str, Any]] = None,
@@ -70,3 +88,24 @@ def initialize_pipeline(
     pipe.to(device_type)
 
     return pipe
+
+
+def pipeline_handle_result(result: StableDiffusionPipelineOutput) -> List[Image]:
+    """
+    Handle the result from the diffusion pipeline and convert it into a list of PIL Images.
+
+    Args:
+        result (StableDiffusionPipelineOutput): Result from the diffusion pipeline.
+
+    Returns:
+        List[Image]: List of generated images.
+    """
+
+    if isinstance(result.images, list):
+        images = result.images
+    elif isinstance(result.images, np.ndarray):
+        images = [Image.fromarray(img) for img in result.images]
+    else:
+        raise ValueError("Unsupported image format")
+
+    return images
