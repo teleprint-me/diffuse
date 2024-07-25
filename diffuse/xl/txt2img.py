@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Script: diffuse.xl.txt2img
 

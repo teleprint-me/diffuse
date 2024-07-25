@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Script: diffuse.3.img2img
 """
