@@ -58,6 +58,13 @@ def get_arguments() -> argparse.Namespace:
         help="Guidance scale for image generation. Default is (float) 7.0.",
     )
     parser.add_argument(
+        "--image_size",
+        type=str,
+        choices=["small", "medium", "large"],
+        default="medium",
+        help="The size of the output image. Default is 'medium'.",
+    )
+    parser.add_argument(
         "--use_safetensors",
         action="store_false",
         help="Use safetensors. Default is True.",
@@ -135,6 +142,12 @@ def main():
     if args.lora is True:
         pipe_image.load_lora_weights(args.lora_path, args.adapter_name)
 
+    dimensions = {
+        "small": (900, 600),
+        "medium": (1200, 800),
+        "large": (1500, 1000),
+    }.get(args.image_size)
+
     images, elapsed_time = generate_image_to_image(
         pipe_image=pipe_image,
         image_path=args.image_path,
@@ -146,6 +159,7 @@ def main():
         num_images_per_prompt=args.num_images,
         output_directory=args.output_dir,
         delay=args.delay,
+        dimensions=dimensions,
     )
 
     print(f"Elapsed time: {elapsed_time}")
