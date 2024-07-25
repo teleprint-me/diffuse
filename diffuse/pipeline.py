@@ -26,11 +26,12 @@ def initialize_pipeline(
 
     Args:
         model_file_path (str): The path to the pre-trained model file
-        pipeline_class (type[DiffusionPipeline]): The Diffusers diffusion
+        pipeline_class (Type[DiffusionPipeline]): The Diffusers diffusion
             pipeline class to utilize
-        pipeline_config (dict): Configuration options for initializing the pipeline,
-            such as device or whether to load from a single pre-trained
-            file.
+        pipeline_config (Optional[Dict[str, Any]]): Configuration options for initializing the pipeline,
+            such as device or whether to load from a single pre-trained file.
+        filter_pipeline_kwargs (Optional[List[str]]): List of keywords to filter out from pipeline configuration.
+        device_type (Optional[str]): The device type to use (e.g., 'cpu' or 'cuda').
 
     Returns:
         DiffusionPipeline: The initialized diffusion pipeline
@@ -39,12 +40,9 @@ def initialize_pipeline(
         FileNotFoundError: If the specified model_file_path is invalid
 
     Examples:
-
         >>> initialize_pipeline("my_model_directory", StableDiffusion3Pipeline, {"device": "cpu"})
 
     """
-    pipe = None
-
     if pipeline_config is None:
         pipeline_config = {}
 
@@ -54,20 +52,19 @@ def initialize_pipeline(
     if device_type is None:
         device_type = "cpu"
 
+    pipe = None
+
     # from_single_file method is only available to classes inheriting from FromSingleFileMixin
     if pipeline_config.get("use_single_file") is True:
-        # if isinstance(pipeline_class, FromSingleFileMixin):
-        # NOTE: I think this doesn't work because pipeline is not a class instance
-        # this means it it did not inherit from its parent classes
-        # and is not a child class of FromSingleFileMixin as a consequence of this.
-        # this is why pipe.to(device_type) ends up being an exception of a NoneType object
-        # this matters because the from_single_file is only available if the child class
-        # inherits from FromSingleFileMixin, but this doesn't seem to be an issue here
-        # and, strangely enough, works regardless.
-        pipe = pipeline_class.from_single_file(model_file_path, **pipeline_config)
+        if issubclass(pipeline_class, FromSingleFileMixin):
+            pipe = pipeline_class.from_single_file(model_file_path, **pipeline_config)
+        else:
+            raise TypeError(
+                f"{pipeline_class.__name__} does not support loading from a single file."
+            )
     else:  # kwargs not expected by the pipeline and are ignored
         for key in filter_pipeline_kwargs:
-            pipeline_config.pop(key)
+            pipeline_config.pop(key, None)
         pipe = pipeline_class.from_pretrained(model_file_path, **pipeline_config)
 
     pipe.to(device_type)
