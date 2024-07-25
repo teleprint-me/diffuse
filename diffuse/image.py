@@ -22,7 +22,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 from diffusers.pipelines import DiffusionPipeline
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
-from PIL import ExifTags, Image
+from PIL import ExifTags, Image, ImageOps
 
 
 def evaluate_path(path: str) -> str:
@@ -32,89 +32,37 @@ def evaluate_path(path: str) -> str:
     return os.path.expanduser(os.path.expandvars(path))
 
 
-def float_is_close(
-    a: float,
-    b: float,
-    relative: float = 1e-03,
-    absolute: float = 0.0,
-) -> bool:
-    """
-    Check if two floating-point values are approximately equal within specified tolerances.
-    """
-    return abs(a - b) <= max(relative * max(abs(a), abs(b)), absolute)
-
-
-def calculate_gcd(a: int, b: int) -> int:
-    """
-    Calculate the greatest common divisor for the remainder of a ratio between two integers.
-    """
-    if b == 0:  # Base case for recursion
-        return a  # Discovered the greatest common divisor
-    return calculate_gcd(b, a % b)  # Recursive step
-
-
-def calculate_aspect_ratio(image: Image) -> Tuple[int, int]:
-    """
-    Calculate the image aspect ratio based on the dimensions from Image.size.
-    """
-    width, height = image.size
-    gcd = calculate_gcd(width, height)
-    return width // gcd, height // gcd
-
-
-def calculate_dimensions(
-    image: Image, aspect_ratios: Optional[List[Tuple[int, int]]] = None
-) -> Tuple[int, int]:
-    """
-    Calculate new dimensions based on the closest target aspect ratio.
-    """
-    width, height = image.size
-
-    if aspect_ratios is None:
-        aspect_ratios = [(4, 3), (3, 2)]
-
-    current_ar = width / height
-    closest_ar = min(aspect_ratios, key=lambda ar: abs(current_ar - ar[0] / ar[1]))
-    target_width, target_height = closest_ar
-
-    if width / target_width > height / target_height:
-        new_width = width
-        new_height = int(width * target_height / target_width)
-    else:
-        new_height = height
-        new_width = int(height * target_width / target_height)
-
-    return new_width, new_height
-
-
 def correct_orientation(image: Image) -> Image:
-    """
-    Correct the image orientation based on EXIF data.
-    """
     try:
         for orientation in ExifTags.TAGS.keys():
             if ExifTags.TAGS[orientation] == "Orientation":
                 break
-        exif = dict(image._getexif().items())
-        if exif[orientation] == 3:
-            image = image.rotate(180, expand=True)
-        elif exif[orientation] == 6:
-            image = image.rotate(270, expand=True)
-        elif exif[orientation] == 8:
-            image = image.rotate(90, expand=True)
+        exif = image._getexif()
+        if exif is not None:
+            orientation = exif[orientation]
+            if orientation == 3:
+                image = image.rotate(180, expand=True)
+            elif orientation == 6:
+                image = image.rotate(270, expand=True)
+            elif orientation == 8:
+                image = image.rotate(90, expand=True)
     except (AttributeError, KeyError, IndexError):
-        pass  # No EXIF data, or unexpected format
+        pass
     return image
 
 
-def resize_and_pad(image: Image, new_width: int, new_height: int) -> Image:
-    resized_image = image.resize((new_width, new_height), Image.LANCZOS)
-    max_dim = max(new_width, new_height)
-    new_image = Image.new("RGB", (max_dim, max_dim), (0, 0, 0))
-    box_width = (max_dim - new_width) // 2
-    box_height = (max_dim - new_height) // 2
-    new_image.paste(resized_image, (box_width, box_height))
-    return new_image
+def resize_and_pad(image: Image, target_aspect_ratio: float) -> Image:
+    width, height = image.size
+    aspect_ratio = width / height
+
+    if aspect_ratio > target_aspect_ratio:
+        new_height = int((width / target_aspect_ratio))
+        image = ImageOps.pad(image, (width, new_height), color=(0, 0, 0))
+    elif aspect_ratio < target_aspect_ratio:
+        new_width = int((height * target_aspect_ratio))
+        image = ImageOps.pad(image, (new_width, height), color=(0, 0, 0))
+
+    return image.resize((width, int(width / target_aspect_ratio)), Image.LANCZOS)
 
 
 def initialize_image(
@@ -122,15 +70,11 @@ def initialize_image(
     dimensions: Optional[Tuple[int, int]] = None,
     aspect_ratios: Optional[List[Tuple[int, int]]] = None,
 ) -> Image:
-    image = Image.open(image_path).convert("RGB")
-    image = correct_orientation(image)
-
-    if dimensions is None:
-        new_width, new_height = calculate_dimensions(image, aspect_ratios)
-    else:
-        new_width, new_height = dimensions
-
-    return resize_and_pad(image, new_width, new_height)
+    with Image.open(image_path) as image:
+        # orientate, resize, and pad image
+        image = correct_orientation(image)
+        image = resize_and_pad(image, target_aspect_ratio=3 / 2)
+    return image
 
 
 def get_estimated_steps(
