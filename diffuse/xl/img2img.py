@@ -15,9 +15,8 @@ import argparse
 import torch
 from diffusers import StableDiffusionXLImg2ImgPipeline
 
-from diffuse.config import config_pipeline
 from diffuse.image import generate_image_to_image
-from diffuse.pipeline import initialize_pipeline
+from diffuse.pipeline import pipeline_config, pipeline_initialize
 from diffuse.prompt import assert_prompt_length
 
 
@@ -29,13 +28,22 @@ def get_arguments() -> argparse.Namespace:
     parser.add_argument("image_path", help="Path to the input image")
     parser.add_argument("prompt", help="Prompt for image generation")
     parser.add_argument(
-        "--use_single_file", action="store_true", help="Use a fine-tuned model"
-    )
-    parser.add_argument(
         "--negative_prompt", help="Negative prompt for image generation"
     )
     parser.add_argument(
         "--output_dir", default="images", help="Directory to save generated images"
+    )
+    parser.add_argument(
+        "--num_images",
+        type=int,
+        default=2,
+        help="Number of images to generate. Default is (int) 2.",
+    )
+    parser.add_argument(
+        "--num_steps",
+        type=int,
+        default=50,
+        help="Number of inference steps. Default is (int) 50.",
     )
     parser.add_argument(
         "--strength",
@@ -50,16 +58,19 @@ def get_arguments() -> argparse.Namespace:
         help="Guidance scale for image generation. Default is (float) 7.0.",
     )
     parser.add_argument(
-        "--num_images",
-        type=int,
-        default=2,
-        help="Number of images to generate. Default is (int) 2.",
+        "--use_safetensors",
+        action="store_false",
+        help="Use safetensors. Default is True.",
     )
     parser.add_argument(
-        "--num_steps",
-        type=int,
-        default=50,
-        help="Number of inference steps. Default is (int) 50.",
+        "--add_watermarker",
+        action="store_true",
+        help="Apply watermarker to images. Default is False.",
+    )
+    parser.add_argument(
+        "--use_single_file",
+        action="store_true",
+        help="Use a fine-tuned model. Default is False.",
     )
     parser.add_argument(
         "--lora",
@@ -78,10 +89,12 @@ def get_arguments() -> argparse.Namespace:
         "--delay",
         type=float,
         default=1 / 30,
-        help="Delay between image generation. Default is (float) 0.0333...",
+        help="Delay between image generation. Default is (float) 1/30.",
     )
     parser.add_argument(
-        "--device-type", default="cpu", help="The device to use. Defaults to 'cpu'."
+        "--device_type",
+        default="cpu",
+        help="The device to use. Defaults to 'cpu'.",
     )
     parser.add_argument(
         "--tokenizer",
@@ -98,15 +111,18 @@ def main():
         assert_prompt_length(args.tokenizer, args.prompt, args.negative_prompt)
 
     # variable keyword arguments to pass to the pipeline for instantiation
-    config = config_pipeline(
+    config = pipeline_config(
         variant="fp16",
-        use_safetensors=True,
-        add_watermarker=False,
         torch_dtype=torch.bfloat16,
+        use_safetensors=args.use_safetensors,
         use_single_file=args.use_single_file,
+        # NOTE: diffusers tests for None for add_watermarker
+        # it does not test for a bool even though it expects a bool
+        # this seems more like a semantic mistake that can trigger odd bugs
+        add_watermarker=True if args.add_watermarker else None,
     )
 
-    pipe = initialize_pipeline(
+    pipe_image = pipeline_initialize(
         model_file_path=args.model_path,
         pipeline_class=StableDiffusionXLImg2ImgPipeline,
         pipeline_config=config,
@@ -114,12 +130,12 @@ def main():
     )
 
     if args.lora is True:
-        pipe.load_lora_weights(args.lora_path, args.adapter_name)
+        pipe_image.load_lora_weights(args.lora_path, args.adapter_name)
 
     images, elapsed_time = generate_image_to_image(
-        pipe,
-        args.image_path,
-        args.prompt,
+        pipe_image=pipe_image,
+        image_path=args.image_path,
+        prompt=args.prompt,
         negative_prompt=args.negative_prompt,
         strength=args.strength,
         num_inference_steps=args.num_steps,
