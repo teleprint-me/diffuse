@@ -67,13 +67,19 @@ def resize_and_pad(image: Image, target_aspect_ratio: float) -> Image:
 
 def initialize_image(
     image_path: str,
-    dimensions: Optional[Tuple[int, int]] = None,
-    aspect_ratios: Optional[List[Tuple[int, int]]] = None,
+    dimensions: Optional[tuple[int, int]] = None,
 ) -> Image:
     with Image.open(image_path) as image:
         # orientate, resize, and pad image
         image = correct_orientation(image)
         image = resize_and_pad(image, target_aspect_ratio=3 / 2)
+
+        # Resize to fixed size
+        if dimensions is None:
+            image = image.resize((1200, 800), Image.LANCZOS)
+        else:
+            image = image.resize(dimensions, Image.LANCZOS)
+
     return image
 
 
