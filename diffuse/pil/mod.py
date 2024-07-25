@@ -62,12 +62,22 @@ def write_image(image: Image, output_path: str) -> None:
     print(f"Saved image to {image_path}")
 
 
-def process_image(input_path: str, output_path: str, display: bool) -> None:
+def process_image(
+    input_path: str,
+    output_path: str,
+    display: bool,
+    dimensions: tuple,
+) -> None:
     with Image.open(input_path) as image:
         # orientate, resize, and pad image
         image = correct_orientation(image)
         image = resize_and_pad(image, target_aspect_ratio=3 / 2)
-        image = image.resize((1200, 800), Image.LANCZOS)  # Resize to fixed size
+
+        # Resize to fixed size
+        if dimensions is None:
+            image = image.resize((900, 600), Image.LANCZOS)
+        else:
+            image = image.resize(dimensions, Image.LANCZOS)
 
         # create the path, file, and write to disk
         os.makedirs(output_path, exist_ok=True)
@@ -89,6 +99,13 @@ def get_parser_arguments() -> argparse.Namespace:
         help="Output directory path. Default is 'images'.",
     )
     parser.add_argument(
+        "--size",
+        type=str,
+        choices=["small", "medium", "large"],
+        default="small",
+        help="The size of the output image. Default is 'small'.",
+    )
+    parser.add_argument(
         "--display",
         action="store_true",
         help="Display the resulting image. Default is False.",
@@ -98,7 +115,14 @@ def get_parser_arguments() -> argparse.Namespace:
 
 def main():
     args = get_parser_arguments()
-    process_image(args.input, args.output, args.display)
+
+    dimensions = {
+        "small": (900, 600),
+        "medium": (1200, 800),
+        "large": (1500, 1000),
+    }.get(args.size)
+
+    process_image(args.input, args.output, args.display, dimensions)
 
 
 if __name__ == "__main__":
