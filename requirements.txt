@@ -22,8 +22,9 @@ transformers
 diffusers
 peft
 accelerate
-sentencepiece
 protobuf
+sentencepiece
+invisible-watermark
 
 # extra
 huggingface-hub
