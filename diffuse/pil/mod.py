@@ -57,26 +57,19 @@ def resize_and_pad(image: Image, target_aspect_ratio: float) -> Image:
     aspect_ratio = width / height
 
     if aspect_ratio > target_aspect_ratio:
-        new_height = int(width / target_aspect_ratio)
-        padding = (new_height - height) // 2
-        image = ImageOps.expand(image, border=(0, padding), fill=(255, 255, 255))
+        new_height = int((width / target_aspect_ratio))
+        image = ImageOps.pad(image, (width, new_height), color=(0, 0, 0))
     elif aspect_ratio < target_aspect_ratio:
-        new_width = int(height * target_aspect_ratio)
-        padding = (new_width - width) // 2
-        image = ImageOps.expand(image, border=(padding, 0), fill=(255, 255, 255))
+        new_width = int((height * target_aspect_ratio))
+        image = ImageOps.pad(image, (new_width, height), color=(0, 0, 0))
 
-    return image
+    return image.resize((width, int(width / target_aspect_ratio)), Image.LANCZOS)
 
 
 def process_image(input_path: str, output_path: str, display: bool) -> None:
     with Image.open(input_path) as image:
         image = correct_orientation(image)
         image = resize_and_pad(image, target_aspect_ratio=3 / 2)
-
-        width, height = image.size
-        new_height = int(width * 2 / 3)
-        # NOTE: ANTIALIAS was superseded by LANCZOS starting from Pillow 2.7.0
-        image = image.resize((width, new_height), Image.LANCZOS)
 
         os.makedirs(output_path, exist_ok=True)
         image_path = f"{output_path}/{datetime.now()}.png"
