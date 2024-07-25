@@ -43,6 +43,7 @@ def initialize_pipeline(
         >>> initialize_pipeline("my_model_directory", StableDiffusion3Pipeline, {"device": "cpu"})
 
     """
+    pipe = None
 
     if pipeline_config is None:
         pipeline_config = {}
@@ -54,9 +55,16 @@ def initialize_pipeline(
         device_type = "cpu"
 
     # from_single_file method is only available to classes inheriting from FromSingleFileMixin
-    if isinstance(FromSingleFileMixin, pipeline_class):
-        if pipeline_config.get("use_single_file", False):
-            pipe = pipeline_class.from_single_file(model_file_path, **pipeline_config)
+    if pipeline_config.get("use_single_file") is True:
+        # if isinstance(pipeline_class, FromSingleFileMixin):
+        # NOTE: I think this doesn't work because pipeline is not a class instance
+        # this means it it did not inherit from its parent classes
+        # and is not a child class of FromSingleFileMixin as a consequence of this.
+        # this is why pipe.to(device_type) ends up being an exception of a NoneType object
+        # this matters because the from_single_file is only available if the child class
+        # inherits from FromSingleFileMixin, but this doesn't seem to be an issue here
+        # and, strangely enough, works regardless.
+        pipe = pipeline_class.from_single_file(model_file_path, **pipeline_config)
     else:  # kwargs not expected by the pipeline and are ignored
         for key in filter_pipeline_kwargs:
             pipeline_config.pop(key)
