@@ -15,23 +15,19 @@ This script aims to simplify the preprocessing step for stable diffusion models,
 """
 
 import argparse
+import os
+from datetime import datetime
 
 from PIL import ExifTags, Image, ImageOps
 
 
 def calculate_gcd(a: int, b: int) -> int:
-    """
-    Calculate the greatest common divisor for the remainder of a ratio between two integers.
-    """
-    if b == 0:  # Base case for recursion
-        return a  # Discovered the greatest common divisor
-    return calculate_gcd(b, a % b)  # Recursive step
+    if b == 0:
+        return a
+    return calculate_gcd(b, a % b)
 
 
 def calculate_aspect_ratio(image: Image) -> tuple[int, int]:
-    """
-    Calculate the image aspect ratio based on the dimensions from Image.size.
-    """
     width, height = image.size
     gcd = calculate_gcd(width, height)
     return width // gcd, height // gcd
@@ -56,25 +52,15 @@ def correct_orientation(image: Image) -> Image:
     return image
 
 
-def resize_and_pad(image, target_width=3, target_height=2):
-    # we need to scale up by the aspect ratio we need
-    # then scale down by the aspect ratio we're deviating from
-    # otherwise, it ends up being equivalent to the identity of the image ratio
-    # e.g. (3 / 2) / (3 / 2) = (3 / 2) * (2 / 3) = (2 / 2) * (3 / 3) = 1 * 1 = 1
+def resize_and_pad(image: Image, target_aspect_ratio: float) -> Image:
     width, height = image.size
-    aspect_ratio_width, aspect_ratio_height = calculate_aspect_ratio(image)
+    aspect_ratio = width / height
 
-    # this is fine with landscape, but may be problematic with portrait
-    # if portrait has 16:9, then rotation results in 9:16,
-    # note this is just an example and can't assume the given ratio
-    # portrait would need to be padded to fit a 3:2 which ImageOps.pad can take care of
-    # in portait, we would only need to scale the width. the only issue that we need to
-    # scale the height proportionally. not sure how to go about that just yet.
-    if aspect_ratio_width > target_width:
-        new_height = int(width * target_width)
+    if aspect_ratio > target_aspect_ratio:
+        new_height = int(width / target_aspect_ratio)
         padding = (new_height - height) // 2
-        image = ImageOps.pad(image, border=(0, padding), fill=(255, 255, 255))
-    elif current_aspect_ratio < target_aspect_ratio:
+        image = ImageOps.expand(image, border=(0, padding), fill=(255, 255, 255))
+    elif aspect_ratio < target_aspect_ratio:
         new_width = int(height * target_aspect_ratio)
         padding = (new_width - width) // 2
         image = ImageOps.expand(image, border=(padding, 0), fill=(255, 255, 255))
@@ -82,56 +68,19 @@ def resize_and_pad(image, target_width=3, target_height=2):
     return image
 
 
-def process_image(input_path, output_path, display):
-    with Image.open(input_path) as img:
-        img = correct_orientation(img)
-        img = resize_and_pad(img, target_aspect_ratio=3 / 2)
-        img.save(output_path)
-
-        if display:
-            img.show()
-
-
 def process_image(input_path: str, output_path: str, display: bool) -> None:
     with Image.open(input_path) as image:
         image = correct_orientation(image)
+        image = resize_and_pad(image, target_aspect_ratio=3 / 2)
+
         width, height = image.size
-
-        # Pad width to ensure it is divisible by 3
-        aspect_ratio = calculate_aspect_ratio(image)  # -> tuple[int, int]
-        if aspect_ratio != (3, 2):
-            # we need to scale up by the aspect ratio we need
-            # then scale down by the aspect ratio we're deviating from
-            # otherwise, it ends up being equivalent to the identity of the image ratio
-            # e.g. (3 / 2) / (3 / 2) = (3 / 2) * (2 / 3) = (2 / 2) * (3 / 3) = 1 * 1 = 1
-            ar_width = aspect_ratio[0]
-            ar_height = aspect_ratio[1]
-
-            # this is fine with landscape, but may be problematic with portrait
-            # if portrait has 16:9, then rotation results in 9:16,
-            # note this is just an example and can't assume the given ratio
-            # portrait would need to be padded to fit a 3:2 which ImageOps.pad can take care of
-            # in portait, we would only need to scale the width. the only issue that we need to
-            # scale the height proportionally. not sure how to go about that just yet.
-            new_width = width * 3  # scale the width by 3
-            new_height = height * 2  # scale the height by 2
-
-            padding = new_width - width
-            # Returns a resized and padded version of the image,
-            # expanded to fill the requested aspect ratio and size.
-            image = ImageOps.pad(
-                image=image,
-                size=(padding // 2, 0),
-                method=Image.Resampling.BICUBIC,
-                color=(255, 255, 255),
-                centering=(0.5, 0.5),
-            )
-
-        # Scale down until an aspect ratio of 3:2 is achieved
+        new_height = int(width * 2 / 3)
         # NOTE: ANTIALIAS was superseded by LANCZOS starting from Pillow 2.7.0
-        image = image.resize((new_width, int(new_width / 3 * 2)), Image.LANCZOS)
+        image = image.resize((width, new_height), Image.LANCZOS)
 
-        image.save(output_path)
+        os.makedirs(output_path, exist_ok=True)
+        image_path = f"{output_path}/{datetime.now()}.png"
+        image.save(image_path)
 
         if display:
             image.show()
