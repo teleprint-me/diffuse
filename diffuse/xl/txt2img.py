@@ -117,7 +117,10 @@ def main():
         # NOTE: diffusers tests for None for add_watermarker
         # it does not test for a bool even though it expects a bool
         # this seems more like a semantic mistake that can trigger odd bugs
-        add_watermarker=True if args.add_watermarker else None,
+        # setting this flag seems to trigger a continuous loop that only ends
+        # if the user interrupts the program. this is not ideal and constitutes
+        # a complete failure in the use and implementation of this feature.
+        add_watermarker=args.add_watermarker,
     )
 
     pipe_text = pipeline_initialize(
