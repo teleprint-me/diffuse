@@ -10,6 +10,8 @@ from typing import List, Optional, Tuple
 from diffusers.pipelines import DiffusionPipeline
 from PIL import Image
 
+from diffuse.pipeline import pipeline_process_result
+
 
 def write_images(
     images: List[Image],
@@ -65,7 +67,7 @@ def generate_text_to_image(
         )
 
         # Handle different types of results (list or numpy array)
-        images = handle_pipeline_result(result)
+        images = pipeline_process_result(result)
         # Create a unique filename using the current timestamp
         dataset = write_images(images, output_directory, delay)
 
