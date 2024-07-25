@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 diffuse.pil.mod
 
@@ -55,7 +57,7 @@ def resize_and_pad(image: Image, target_aspect_ratio: float) -> Image:
 
 
 def write_image(image: Image, output_path: str) -> None:
-    image_path = "-".join(f"{output_path}/{datetime.now()}.png".split(" "))
+    image_path = f"{output_path}/{datetime.now()}.png"
     image.save(image_path)
     print(f"Saved image to {image_path}")
 
