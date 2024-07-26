@@ -45,12 +45,6 @@ def get_arguments() -> argparse.Namespace:
         help="Number of inference steps. Default is (int) 50.",
     )
     parser.add_argument(
-        "--strength",
-        type=float,
-        default=0.5,
-        help="The amount of noise added to the image. Values must be between 0 and 1. Default is (float) 0.5.",
-    )
-    parser.add_argument(
         "--guidance_scale",
         type=float,
         default=7,
@@ -60,11 +54,6 @@ def get_arguments() -> argparse.Namespace:
         "--use_safetensors",
         action="store_false",
         help="Use safetensors. Default is True.",
-    )
-    parser.add_argument(
-        "--add_watermarker",
-        action="store_true",
-        help="Apply watermarker to images. Default is False.",
     )
     parser.add_argument(
         "--use_single_file",
@@ -114,7 +103,6 @@ def main():
         torch_dtype=torch.bfloat16,
         use_safetensors=args.use_safetensors,
         use_single_file=args.use_single_file,
-        add_watermarker=args.add_watermarker,
     )
 
     pipe_text = pipeline_initialize(
