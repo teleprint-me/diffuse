@@ -18,8 +18,8 @@ def get_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate images using images with Stable Diffusion 3 models."
     )
-    parser.add_argument("model", help="Path to the diffusion model or model ID")
-    parser.add_argument("image", help="Path to the initial image")
+    parser.add_argument("model_path", help="Path to the diffusion model or model ID")
+    parser.add_argument("image_path", help="Path to the input image")
     parser.add_argument("prompt", help="Prompt for image generation")
     parser.add_argument(
         "--negative_prompt", help="Negative prompt for image generation"
@@ -98,7 +98,6 @@ def main():
         variant="fp16",
         torch_dtype=torch.bfloat16,
         use_safetensors=args.use_safetensors,
-        use_single_file=args.use_single_file,
         add_watermarker=args.add_watermarker,
     )
 
