@@ -15,9 +15,9 @@ import argparse
 import torch
 from diffusers import StableDiffusionXLPipeline
 
+from diffuse.generate import generate_text_to_image
 from diffuse.pipeline import pipeline_config, pipeline_initialize
 from diffuse.prompt import assert_prompt_length
-from diffuse.text import generate_text_to_image
 
 
 def get_arguments() -> argparse.Namespace:

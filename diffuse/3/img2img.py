@@ -9,7 +9,7 @@ import argparse
 import torch
 from diffusers import StableDiffusion3Img2ImgPipeline
 
-from diffuse.image import generate_image_to_image
+from diffuse.generate import generate_image_to_image
 from diffuse.pipeline import pipeline_config, pipeline_initialize
 from diffuse.prompt import assert_prompt_length
 
