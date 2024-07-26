@@ -136,7 +136,7 @@ def main():
         model_file_path=args.model_path,
         pipeline_class=StableDiffusionXLImg2ImgPipeline,
         pipeline_config=config,
-        device_type=args.device_type,  # 'cpu', 'cude', etc.
+        device_type=args.device_type,  # 'cpu', 'cuda', etc.
     )
 
     if args.lora is True:

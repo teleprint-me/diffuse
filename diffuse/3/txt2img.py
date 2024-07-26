@@ -121,7 +121,7 @@ def main():
         model_file_path=args.model_path,
         pipeline_class=StableDiffusion3Pipeline,
         pipeline_config=config,
-        device_type=args.device_type,
+        device_type=args.device_type,  # 'cpu', 'cuda', etc.
     )
 
     if args.lora_path is not None:
