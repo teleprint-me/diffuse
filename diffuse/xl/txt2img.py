@@ -45,12 +45,6 @@ def get_arguments() -> argparse.Namespace:
         help="Number of inference steps. Default is (int) 50.",
     )
     parser.add_argument(
-        "--strength",
-        type=float,
-        default=0.5,
-        help="The amount of noise added to the image. Values must be between 0 and 1. Default is (float) 0.5.",
-    )
-    parser.add_argument(
         "--guidance_scale",
         type=float,
         default=7,
