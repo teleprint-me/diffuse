@@ -64,11 +64,6 @@ def get_arguments() -> argparse.Namespace:
         help="Use safetensors. Default is True.",
     )
     parser.add_argument(
-        "--add_watermarker",
-        action="store_true",
-        help="Apply watermarker to images. Default is False.",
-    )
-    parser.add_argument(
         "--delay",
         type=float,
         default=1 / 30,
@@ -98,7 +93,6 @@ def main():
         variant="fp16",
         torch_dtype=torch.bfloat16,
         use_safetensors=args.use_safetensors,
-        add_watermarker=args.add_watermarker,
     )
 
     pipe_image = pipeline_initialize(
